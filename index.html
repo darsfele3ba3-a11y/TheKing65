@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -222,6 +222,72 @@ header {
 .top-bar h3 {
     font-size: 1.2rem;
     color: #475569;
+}
+
+.whatsapp-share-box {
+    margin: 25px auto 0;
+    max-width: 420px;
+    background: #f0fdf6;
+    border: 2px dashed #25D366;
+    border-radius: 18px;
+    padding: 20px;
+    text-align: center;
+}
+
+.whatsapp-share-box label {
+    display: block;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+}
+
+.whatsapp-share-box input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    margin-bottom: 14px;
+    text-align: center;
+}
+
+.whatsapp-share-box input:focus {
+    outline: none;
+    border-color: #25D366;
+}
+
+.btn-whatsapp {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 700;
+    box-shadow: 0 4px 0 #128C43;
+    transition: all 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-whatsapp:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #128C43;
+}
+
+.whatsapp-sent-msg {
+    margin-top: 12px;
+    color: var(--success);
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: none;
 }
 
 .btn-back {
@@ -538,6 +604,16 @@ header {
             <h2>Game Over!</h2>
             <h3 style="margin: 20px 0; font-size: 1.8rem; color: var(--primary);">Final Score: <span id="final-score"></span> / <span id="final-total"></span></h3>
             <div id="mistakes-container" class="results-list"></div>
+
+            <div class="whatsapp-share-box">
+                <label for="student-name-input">✏️ Write your name to send your result:</label>
+                <input type="text" id="student-name-input" placeholder="Your Name" maxlength="40">
+                <button class="btn-whatsapp" onclick="sendResultsWhatsApp()">
+                    <i class="fab fa-whatsapp"></i> Send Result to Mr Kareem
+                </button>
+                <div class="whatsapp-sent-msg" id="whatsapp-sent-msg"><i class="fas fa-check-circle"></i> Opening WhatsApp...</div>
+            </div>
+
             <button class="btn-back" style="margin-top: 25px; padding: 15px 30px; background: var(--primary); box-shadow: 0 5px 0 #312e81; font-size: 1.2rem;" onclick="returnToMenu()">
                 <i class="fas fa-home"></i> Return to Main Menu
             </button>
@@ -627,6 +703,15 @@ header {
         let mistakes = [];
         let activeIntervals = [];
         let currentQuestionsList = [];
+
+        const WHATSAPP_NUMBER = "201271812647";
+        const GAME_TITLES = {
+            1: "Multiple Choice",
+            2: "Falling Bubbles",
+            3: "Target Practice",
+            4: "True or False",
+            5: "Advanced Challenge"
+        };
 
         const screens = document.querySelectorAll('.screen');
         const qNumberSpan = document.getElementById('q-number');
@@ -863,6 +948,11 @@ header {
             switchScreen('results-screen');
             document.getElementById('final-score').innerText = score;
 
+            const nameInput = document.getElementById('student-name-input');
+            if (nameInput) nameInput.value = '';
+            const sentMsg = document.getElementById('whatsapp-sent-msg');
+            if (sentMsg) sentMsg.style.display = 'none';
+
             const mistakesContainer = document.getElementById('mistakes-container');
             mistakesContainer.innerHTML = '';
 
@@ -879,6 +969,45 @@ header {
                     mistakesContainer.appendChild(div);
                 });
             }
+        }
+
+        function sendResultsWhatsApp() {
+            const nameInput = document.getElementById('student-name-input');
+            const studentName = nameInput.value.trim();
+
+            if (!studentName) {
+                nameInput.style.borderColor = 'var(--danger)';
+                nameInput.placeholder = 'Please write your name first!';
+                nameInput.focus();
+                return;
+            }
+            nameInput.style.borderColor = '#25D366';
+
+            const sectionName = (currentSection === 'grammar') ? 'Grammar' : 'Vocabulary';
+            const gameName = GAME_TITLES[currentGameId] || 'Game';
+            const percentage = Math.round((score / totalQuestions) * 100);
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('en-GB');
+
+            let message = "📚 *Level Up English - Result*\n";
+            message += "👤 Student: " + studentName + "\n";
+            message += "📖 Unit " + UNIT_NUM + ": " + UNIT_NAME + "\n";
+            message += "✏️ Section: " + sectionName + " (" + GRAMMAR_TOPIC_OR_WORDS() + ")\n";
+            message += "🎮 Game: " + gameName + "\n";
+            message += "⭐ Score: " + score + " / " + totalQuestions + " (" + percentage + "%)\n";
+            message += "📅 Date: " + dateStr;
+
+            const encodedMessage = encodeURIComponent(message);
+            const waUrl = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodedMessage;
+
+            const sentMsg = document.getElementById('whatsapp-sent-msg');
+            if (sentMsg) sentMsg.style.display = 'block';
+
+            window.open(waUrl, '_blank');
+        }
+
+        function GRAMMAR_TOPIC_OR_WORDS() {
+            return (currentSection === 'grammar') ? GRAMMAR_TOPIC : (UNIT_NAME + ' Words');
         }
     </script>
 
